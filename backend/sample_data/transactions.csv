@@ -1,0 +1,4 @@
+account_id,transaction_type,amount,currency,merchant,category,description,timestamp,location,destination_account_id
+ACC-1001,DEBIT,42.50,USD,Blue Bottle Coffee,Food,Team coffee,2026-09-25T09:30:00,New York US,
+ACC-1001,DEBIT,128.00,USD,Notion Labs,Software,Workspace subscription,2026-09-25T11:15:00,San Francisco US,
+ACC-1003,CREDIT,500.00,USD,Customer Refund,Income,Returned shipment credit,2026-09-25T15:40:00,Jersey City US,
