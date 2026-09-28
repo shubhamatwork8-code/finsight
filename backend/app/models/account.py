@@ -15,6 +15,8 @@ class Account(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(120))
+    account_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    ifsc_code: Mapped[str] = mapped_column(String(50), nullable=False)
     account_type: Mapped[str] = mapped_column(String(20), index=True)
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     balance: Mapped[Decimal] = mapped_column(Money, default=Decimal("0.00"))

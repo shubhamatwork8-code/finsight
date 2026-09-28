@@ -3,8 +3,40 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { authApi } from "../api";
 import { errorMessage } from "../api/client";
 import { useAuth } from "../components/Auth";
-import { Field, controlClass } from "../components/Modal";
-import { Button } from "../components/Topbar";
+import { AuthPageLayout, AuthSubmitButton } from "../components/AuthPageLayout";
+import { LockKeyhole, Mail } from "lucide-react";
+
+function AuthField({
+  label,
+  name,
+  type,
+  placeholder,
+  autoComplete,
+}: {
+  label: string;
+  name: string;
+  type: string;
+  placeholder: string;
+  autoComplete: string;
+}) {
+  const Icon = type === "password" ? LockKeyhole : Mail;
+  return (
+    <label className="block text-sm font-medium text-slate-300">
+      <span className="mb-2 block">{label}</span>
+      <span className="flex items-center gap-3 rounded-xl border border-white/[0.09] bg-white/[0.035] px-4 transition focus-within:border-indigo-400/70 focus-within:bg-white/[0.055]">
+        <Icon size={18} className="shrink-0 text-slate-500" aria-hidden="true" />
+        <input
+          name={name}
+          type={type}
+          required
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          className="h-[54px] min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-slate-600"
+        />
+      </span>
+    </label>
+  );
+}
 
 export function Login() {
   const { user, ready, signIn } = useAuth();
@@ -34,30 +66,44 @@ export function Login() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-ink px-4">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-xl border border-line bg-navy p-6 shadow-card">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-emerald">Workspace</p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">Sign in to FinSight</h1>
-        <p className="mt-2 text-sm text-muted">Each login keeps its own ledger, risk settings, and audit trail.</p>
-        <div className="mt-6 grid gap-3">
-          <Field label="Email">
-            <input name="email" type="email" required autoComplete="username" className={controlClass} />
-          </Field>
-          <Field label="Password">
-            <input name="password" type="password" required autoComplete="current-password" className={controlClass} />
-          </Field>
-          {error ? <p className="text-sm text-coral">{error}</p> : null}
-          <Button type="submit" tone="primary" disabled={saving}>
-            {saving ? "Signing in…" : "Sign in"}
-          </Button>
-        </div>
-        <p className="mt-4 text-sm text-muted">
-          New here? <Link className="text-signal" to="/register">Create an account</Link>
-        </p>
-        <p className="mt-4 rounded-md border border-line bg-ink px-3 py-2 text-sm text-muted">
-          Demo books: <span className="text-white">demo@finsight.local</span> / <span className="font-mono text-white">FinSight-demo-1</span>
-        </p>
+    <AuthPageLayout
+      title="Welcome back"
+      description="Sign in to your account to continue."
+      footer={
+        <>
+          Don&apos;t have an account?{" "}
+          <Link className="font-semibold text-indigo-300 transition hover:text-indigo-200" to="/register">
+            Sign up
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="grid gap-5">
+        <AuthField
+          label="Email address"
+          name="email"
+          type="email"
+          autoComplete="username"
+          placeholder="name@example.com"
+        />
+        <AuthField
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Enter your password"
+        />
+
+        {error ? (
+          <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 p-3 text-sm text-coral">
+            {error}
+          </p>
+        ) : null}
+
+        <AuthSubmitButton disabled={saving}>
+          {saving ? "Signing in..." : "Sign in"}
+        </AuthSubmitButton>
       </form>
-    </div>
+    </AuthPageLayout>
   );
 }

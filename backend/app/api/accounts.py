@@ -38,6 +38,8 @@ def post_account(payload: AccountCreate, db: Session = Depends(get_db)):
     account = create_account(
         db,
         name=payload.name,
+        account_number=payload.account_number,
+        ifsc_code=payload.ifsc_code,
         account_type=payload.account_type,
         currency=payload.currency,
         opening_balance=payload.opening_balance,

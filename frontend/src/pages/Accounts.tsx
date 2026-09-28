@@ -46,6 +46,8 @@ export function Accounts() {
     try {
       await accountsApi.create({
         name: String(form.get("name") || ""),
+        account_number: String(form.get("account_number") || ""),
+        ifsc_code: String(form.get("ifsc_code") || ""),
         account_type: String(form.get("account_type") || "CHECKING"),
         currency: code,
         opening_balance: String(form.get("opening_balance") || "0"),
@@ -98,6 +100,12 @@ export function Accounts() {
           <form className="grid gap-3" onSubmit={onCreate}>
             <Field label="Account name">
               <input name="name" required className={controlClass} />
+            </Field>
+            <Field label="Account number">
+              <input name="account_number" required className={controlClass} />
+            </Field>
+            <Field label="IFSC Code">
+              <input name="ifsc_code" required className={controlClass} />
             </Field>
             <Field label="Account type">
               <select name="account_type" className={controlClass} defaultValue="CHECKING">

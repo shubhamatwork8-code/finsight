@@ -3,11 +3,46 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { authApi } from "../api";
 import { errorMessage } from "../api/client";
 import { useAuth } from "../components/Auth";
-import { Field, controlClass } from "../components/Modal";
-import { Button } from "../components/Topbar";
+import { AuthPageLayout, AuthSubmitButton } from "../components/AuthPageLayout";
+import { LockKeyhole, Mail, UserRound } from "lucide-react";
+
+function AuthField({
+  label,
+  name,
+  type,
+  placeholder,
+  autoComplete,
+  minLength,
+}: {
+  label: string;
+  name: string;
+  type: string;
+  placeholder: string;
+  autoComplete?: string;
+  minLength?: number;
+}) {
+  const Icon = name === "full_name" ? UserRound : type === "password" ? LockKeyhole : Mail;
+  return (
+    <label className="block text-sm font-medium text-slate-300">
+      <span className="mb-2 block">{label}</span>
+      <span className="flex items-center gap-3 rounded-xl border border-white/[0.09] bg-white/[0.035] px-4 transition focus-within:border-indigo-400/70 focus-within:bg-white/[0.055]">
+        <Icon size={18} className="shrink-0 text-slate-500" aria-hidden="true" />
+        <input
+          name={name}
+          type={type}
+          required
+          minLength={minLength}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          className="h-[54px] min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-slate-600"
+        />
+      </span>
+    </label>
+  );
+}
 
 export function Register() {
-  const { user, ready, signIn } = useAuth();
+  const { user, ready } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -20,13 +55,12 @@ export function Register() {
     setSaving(true);
     setError(null);
     try {
-      const session = await authApi.register({
+      await authApi.register({
         full_name: String(form.get("full_name") || ""),
         email: String(form.get("email") || ""),
         password: String(form.get("password") || ""),
       });
-      signIn(session.token, session.user);
-      navigate("/dashboard");
+      navigate("/login");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -35,30 +69,52 @@ export function Register() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-ink px-4">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-xl border border-line bg-navy p-6 shadow-card">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-emerald">Workspace</p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">Create your books</h1>
-        <p className="mt-2 text-sm text-muted">You start with an empty ledger. Currency and fraud rules stay private to this login.</p>
-        <div className="mt-6 grid gap-3">
-          <Field label="Full name">
-            <input name="full_name" required className={controlClass} />
-          </Field>
-          <Field label="Email">
-            <input name="email" type="email" required autoComplete="username" className={controlClass} />
-          </Field>
-          <Field label="Password">
-            <input name="password" type="password" required minLength={8} autoComplete="new-password" className={controlClass} />
-          </Field>
-          {error ? <p className="text-sm text-coral">{error}</p> : null}
-          <Button type="submit" tone="primary" disabled={saving}>
-            {saving ? "Creating…" : "Create account"}
-          </Button>
-        </div>
-        <p className="mt-4 text-sm text-muted">
-          Already registered? <Link className="text-signal" to="/login">Sign in</Link>
-        </p>
+    <AuthPageLayout
+      title="Create your account"
+      description="Set up your FinSight workspace and start with a clear view of your ledger."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link className="font-semibold text-indigo-300 transition hover:text-indigo-200" to="/login">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="grid gap-4">
+        <AuthField
+          label="Full name"
+          name="full_name"
+          type="text"
+          autoComplete="name"
+          placeholder="Your name"
+        />
+        <AuthField
+          label="Email address"
+          name="email"
+          type="email"
+          autoComplete="username"
+          placeholder="name@example.com"
+        />
+        <AuthField
+          label="Password"
+          name="password"
+          type="password"
+          minLength={8}
+          autoComplete="new-password"
+          placeholder="At least 8 characters"
+        />
+
+        {error ? (
+          <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 p-3 text-sm text-coral">
+            {error}
+          </p>
+        ) : null}
+
+        <AuthSubmitButton disabled={saving}>
+          {saving ? "Creating account..." : "Create account"}
+        </AuthSubmitButton>
       </form>
-    </div>
+    </AuthPageLayout>
   );
 }

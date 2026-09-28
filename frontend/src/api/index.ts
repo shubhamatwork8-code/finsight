@@ -27,8 +27,14 @@ export const dashboardApi = {
 export const accountsApi = {
   list: async () => (await api.get<Account[]>("/api/accounts")).data,
   get: async (id: string) => (await api.get<Account>(`/api/accounts/${id}`)).data,
-  create: async (payload: { name: string; account_type: string; currency: string; opening_balance: string }) =>
-    (await api.post<Account>("/api/accounts", payload)).data,
+  create: async (payload: {
+    name: string;
+    account_number: string;
+    ifsc_code: string;
+    account_type: string;
+    currency: string;
+    opening_balance: string;
+  }) => (await api.post<Account>("/api/accounts", payload)).data,
   transactions: async (id: string) => (await api.get<Transaction[]>(`/api/accounts/${id}/transactions`)).data,
 };
 

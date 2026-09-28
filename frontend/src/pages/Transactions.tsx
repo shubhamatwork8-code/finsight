@@ -8,7 +8,7 @@ import { Field, Modal, controlClass } from "../components/Modal";
 import { EmptyState, ErrorState, LoadingState, Pagination } from "../components/States";
 import { Button, Topbar } from "../components/Topbar";
 import { when } from "../lib/format";
-import type { Account, ImportSummary, LedgerPage, ReceiptDraft, Transaction } from "../types";
+import type { Account, ImportSummary, LedgerPage, Transaction } from "../types";
 
 export function Transactions() {
   const money = useMoney();
@@ -27,12 +27,10 @@ export function Transactions() {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
-  const [receipt, setReceipt] = useState<ReceiptDraft | null>(null);
   const [ledger, setLedger] = useState<LedgerPage | null>(null);
   const [view, setView] = useState<"transactions" | "ledger">("transactions");
   const record = params.get("record") === "1";
   const importing = params.get("import") === "1";
-  const readingReceipt = params.get("receipt") === "1";
   const [idempotencyKey, setIdempotencyKey] = useState("");
 
   function load(nextPage = page) {
@@ -59,8 +57,8 @@ export function Transactions() {
   }, [type, risk]);
 
   useEffect(() => {
-    if (record || readingReceipt) setIdempotencyKey(crypto.randomUUID());
-  }, [record, readingReceipt]);
+    if (record) setIdempotencyKey(crypto.randomUUID());
+  }, [record]);
 
   async function openDetail(id: string) {
     const txn = await transactionsApi.get(id);
@@ -83,53 +81,9 @@ export function Transactions() {
         merchant: form.get("merchant"),
         category: form.get("category"),
         description: form.get("description") || "",
-        timestamp: String(form.get("timestamp")),
-        location: form.get("location") || null,
-      }, idempotencyKey);
-      setParams({});
-      load(1);
-    } catch (err) {
-      setFormError(errorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function onReadReceipt(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const file = (event.currentTarget.elements.namedItem("file") as HTMLInputElement).files?.[0];
-    if (!file) return;
-    setSaving(true);
-    setFormError(null);
-    try {
-      setReceipt(await transactionsApi.readReceipt(file));
-    } catch (err) {
-      setFormError(errorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function onConfirmReceipt(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!receipt) return;
-    const form = new FormData(event.currentTarget);
-    setSaving(true);
-    setFormError(null);
-    try {
-      await transactionsApi.confirmReceipt({
-        account_id: form.get("account_id"),
-        transaction_type: form.get("transaction_type"),
-        amount: form.get("amount"),
-        currency: code,
-        merchant: form.get("merchant"),
-        category: form.get("category") || "Uncategorized",
-        description: form.get("description") || "",
-        timestamp: String(form.get("timestamp")),
+        timestamp: new Date().toISOString(),
         location: null,
-        source_filename: receipt.filename,
       }, idempotencyKey);
-      setReceipt(null);
       setParams({});
       load(1);
     } catch (err) {
@@ -138,6 +92,7 @@ export function Transactions() {
       setSaving(false);
     }
   }
+
 
   async function onImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -165,7 +120,6 @@ export function Transactions() {
         actions={
           <>
             <Button onClick={() => setParams({ import: "1" })}>Import CSV</Button>
-            <Button onClick={() => setParams({ receipt: "1" })}>Import receipt</Button>
             <Button tone="primary" onClick={() => setParams({ record: "1" })}>
               Record Transaction
             </Button>
@@ -379,12 +333,6 @@ export function Transactions() {
             <Field label="Category">
               <input name="category" required className={controlClass} />
             </Field>
-            <Field label="Timestamp">
-              <input name="timestamp" required type="datetime-local" className={controlClass} />
-            </Field>
-            <Field label="Location">
-              <input name="location" className={controlClass} />
-            </Field>
             <div className="md:col-span-2">
               <Field label="Description">
                 <input name="description" className={controlClass} />
@@ -397,91 +345,7 @@ export function Transactions() {
           </form>
         </Modal>
       ) : null}
-      {readingReceipt ? (
-        <Modal
-          title={receipt ? "Review receipt" : "Import receipt"}
-          onClose={() => {
-            setReceipt(null);
-            setFormError(null);
-            setParams({});
-          }}
-        >
-          {receipt ? (
-            <form className="grid gap-3 md:grid-cols-2" onSubmit={onConfirmReceipt}>
-              <p className="text-sm text-muted md:col-span-2">
-                Nothing is posted until you confirm. The bill total is one debit unless you mark it as a credit.
-              </p>
-              {receipt.warnings.map((warning) => (
-                <p key={warning} className="rounded-md border border-amber/40 bg-amber/10 px-3 py-2 text-sm text-amber md:col-span-2">
-                  {warning}
-                </p>
-              ))}
-              <Field label="Account">
-                <select name="account_id" required className={controlClass} defaultValue={accounts[0]?.id ?? ""}>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Type">
-                <select name="transaction_type" className={controlClass} defaultValue={receipt.transaction_type}>
-                  <option>DEBIT</option>
-                  <option>CREDIT</option>
-                </select>
-              </Field>
-              <Field label="Merchant">
-                <input name="merchant" required defaultValue={receipt.merchant} className={controlClass} />
-              </Field>
-              <Field label={`Amount (${code})`}>
-                <input
-                  name="amount"
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  defaultValue={receipt.detected_currency && receipt.detected_currency !== code ? "" : receipt.amount}
-                  className={controlClass}
-                />
-              </Field>
-              <Field label="Category">
-                <input name="category" required defaultValue={receipt.category} className={controlClass} />
-              </Field>
-              <Field label="Timestamp">
-                <input name="timestamp" required type="datetime-local" defaultValue={receipt.timestamp} className={controlClass} />
-              </Field>
-              <div className="md:col-span-2">
-                <Field label="Description">
-                  <input name="description" defaultValue={receipt.description} className={controlClass} />
-                </Field>
-              </div>
-              {receipt.raw_text ? (
-                <details className="text-sm text-muted md:col-span-2">
-                  <summary>Text read from the file</summary>
-                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-line bg-ink p-3">{receipt.raw_text}</pre>
-                </details>
-              ) : null}
-              {accounts.length === 0 ? <p className="text-sm text-coral md:col-span-2">Create an account before posting this bill.</p> : null}
-              {formError ? <p className="text-sm text-coral md:col-span-2">{formError}</p> : null}
-              <Button type="submit" tone="primary" disabled={saving || accounts.length === 0}>
-                {saving ? "Posting…" : "Post transaction"}
-              </Button>
-            </form>
-          ) : (
-            <form className="grid gap-3" onSubmit={onReadReceipt}>
-              <p className="text-sm text-muted">
-                Upload a PDF or a photo of a bill. FinSight reads the merchant, date, and total, then asks you to confirm the account before the ledger changes.
-              </p>
-              <input name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" required className="text-sm" aria-label="Receipt file" />
-              {formError ? <p className="text-sm text-coral">{formError}</p> : null}
-              <Button type="submit" tone="primary" disabled={saving}>
-                {saving ? "Reading…" : "Read receipt"}
-              </Button>
-            </form>
-          )}
-        </Modal>
-      ) : null}
+
       {importing ? (
         <Modal
           title="Import CSV"

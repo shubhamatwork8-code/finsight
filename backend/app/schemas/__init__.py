@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 
 class AccountCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
+    account_number: str = Field(min_length=1, max_length=50)
+    ifsc_code: str = Field(min_length=1, max_length=50)
     account_type: Literal["CHECKING", "SAVINGS", "OPERATIONS"]
     currency: str = "USD"
     opening_balance: Decimal = Decimal("0")

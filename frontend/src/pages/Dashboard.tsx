@@ -49,7 +49,6 @@ export function Dashboard() {
             <Button onClick={() => navigate("/transactions?import=1")}>
               <Upload size={16} /> Import CSV
             </Button>
-            <Button onClick={() => navigate("/transactions?receipt=1")}>Import receipt</Button>
             <Button onClick={() => navigate("/accounts?create=1")}>New Account</Button>
             <Button tone="primary" onClick={() => navigate("/transactions?record=1")}>
               Record Transaction

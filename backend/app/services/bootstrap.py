@@ -19,6 +19,8 @@ def provision_workspace(db, user: User) -> None:
                 id=settlement_id,
                 user_id=user.id,
                 name="External Settlement",
+                account_number="SYSTEM0000",
+                ifsc_code="SYS000",
                 account_type="SYSTEM",
                 currency="USD",
                 balance=0,
